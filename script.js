@@ -248,4 +248,46 @@ document.addEventListener('DOMContentLoaded', () => {
         resize();
         animate();
     }
+
+    // --- Contact Form Submission ---
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = contactForm.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+
+            // Basic UI loading state
+            submitBtn.innerHTML = 'Transmitting...';
+            submitBtn.disabled = true;
+
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, message })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Transmission successful! Message securely delivered to the database.');
+                    contactForm.reset();
+                } else {
+                    alert(`Error: ${data.error || 'Failed to send payload.'}`);
+                }
+            } catch (error) {
+                console.error("Submission error:", error);
+                alert('Connection failure. Could not reach serverless backend.');
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+    }
 });

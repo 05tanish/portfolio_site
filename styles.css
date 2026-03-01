@@ -252,19 +252,21 @@ a {
     top: 0;
     z-index: 100;
     backdrop-filter: blur(8px);
-    /* Ensure readability over scrolling content */
+    -webkit-backdrop-filter: blur(8px);
     background: linear-gradient(to bottom, var(--bg-primary) 80%, transparent);
     padding-top: var(--space-sm);
     padding-bottom: var(--space-sm);
     margin-top: 0;
-    /* Reset top margin since it's sticky at the very top */
     transition: all var(--transition-smooth);
+    transform: translateZ(0);
+    /* Force GPU acceleration to stop text flickering */
+    will-change: padding, backdrop-filter;
 }
 
 .main-header.scrolled {
     padding-top: var(--space-xs);
     padding-bottom: var(--space-xs);
-    margin-bottom: var(--space-lg);
+    /* margin-bottom change removed to prevent scroll jumping loop */
 }
 
 .header-inner {

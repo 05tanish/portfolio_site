@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Rishi</title>
+    <!-- Use the same global styles but minimal structure -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Dashboard specific overrides */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            display: block;
+            min-height: 100vh;
+        }
+
+        #login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: var(--space-xl) var(--space-md);
+            display: none;
+            /* hidden until auth */
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--space-xl);
+            padding-bottom: var(--space-sm);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--space-xl);
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .admin-card {
+            background: rgba(163, 113, 247, 0.03);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: var(--space-md);
+        }
+
+        .admin-card h2 {
+            margin-top: 0;
+            color: var(--accent-primary);
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: var(--space-xs);
+            margin-bottom: var(--space-md);
+        }
+
+        /* Basic lists for data */
+        .data-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .data-item {
+            padding: var(--space-sm);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .data-item:last-child {
+            border-bottom: none;
+        }
+
+        .data-item strong {
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .delete-btn {
+            background: transparent;
+            color: #ff6b6b;
+            border: 1px solid #ff6b6b;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ff6b6b;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Simple Login Screen -->
+    <div id="login-overlay">
+        <h1 class="page-title">Admin Access</h1>
+        <br>
+        <form id="auth-form" class="retro-form" style="max-width: 400px; width: 100%;">
+            <div class="input-group">
+                <label for="admin-token">Authorization Token</label>
+                <input type="password" id="admin-token" required placeholder="Enter Secret Key">
+            </div>
+            <button type="submit" class="action-btn">Authenticate <span class="arrow">→</span></button>
+        </form>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div class="dashboard-container" id="main-dash">
+        <header class="dashboard-header">
+            <h1 class="page-title">Command Center</h1>
+            <button class="action-btn" onclick="logout()">Logout</button>
+        </header>
+
+        <div class="dashboard-grid">
+
+            <!-- Messages Section -->
+            <div class="admin-card">
+                <h2>Incoming Transmissions (Contact)</h2>
+                <ul class="data-list" id="messages-list">
+                    <li class="data-item mono text-small text-tertiary">Loading messages...</li>
+                </ul>
+            </div>
+
+            <!-- New Blog Post Form -->
+            <div class="admin-card">
+                <h2>Create Blog Log</h2>
+                <form id="add-blog-form" class="retro-form">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" id="b-title" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Date (YYYY-MM-DD)</label>
+                        <input type="date" id="b-date" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Content</label>
+                        <textarea id="b-content" rows="4" required></textarea>
+                    </div>
+                    <button type="submit" class="action-btn">Post Log</button>
+                </form>
+
+                <h3 style="margin-top: var(--space-lg); font-size: 1rem;">Recent Logs</h3>
+                <ul class="data-list" id="blogs-list"></ul>
+            </div>
+
+            <!-- New Project Form (Simplified for now) -->
+            <div class="admin-card" style="grid-column: 1 / -1;">
+                <h2>Add Project</h2>
+                <form id="add-project-form" class="retro-form"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+                    <div class="input-group">
+                        <label>Title</label>
+                        <input type="text" id="p-title" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Primary Language</label>
+                        <input type="text" id="p-lang" placeholder="e.g. Python">
+                    </div>
+                    <div class="input-group" style="grid-column: 1 / -1;">
+                        <label>Description</label>
+                        <textarea id="p-desc" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="action-btn" style="grid-column: 1 / -1;">Publish Project</button>
+                </form>
+
+                <h3 style="margin-top: var(--space-md); font-size: 1rem;">Active Projects</h3>
+                <ul class="data-list" id="projects-list"></ul>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+
+</html>
