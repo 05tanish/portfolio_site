@@ -46,29 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Blog Post Toggle Logic ---
-    const blogToggles = document.querySelectorAll('.toggle-blog');
-    blogToggles.forEach(toggle => {
-        toggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            const article = toggle.closest('.log-entry');
-            const content = article.querySelector('.log-content');
-            const arrow = toggle.querySelector('.arrow');
-
-            if (article.classList.contains('expanded')) {
-                // Collapse
-                article.classList.remove('expanded');
-                content.style.display = 'none';
-                arrow.textContent = '↓';
-                arrow.style.transform = 'translateY(0)';
-            } else {
-                // Expand
-                article.classList.add('expanded');
-                content.style.display = 'block';
-                arrow.textContent = '↑';
-                arrow.style.transform = 'translateY(-2px)';
-            }
-        });
-    });
+    const intialBlogToggles = document.querySelectorAll('.toggle-blog');
+    attachBlogToggles(intialBlogToggles);
 
     // Handle initial load with hash if present
     if (window.location.hash) {
@@ -290,4 +269,102 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Dynamic Data Fetching (Projects & Blogs) ---
+    async function loadDynamicContent() {
+        try {
+            // Fetch Projects
+            const projRes = await fetch('/api/projects');
+            if (projRes.ok) {
+                const projData = await projRes.json();
+                if (projData.projects && projData.projects.length > 0) {
+                    const projectsContainer = document.getElementById('projects-container');
+                    if (projectsContainer) {
+                        // Generate HTML for fetched projects
+                        const projectsHTML = projData.projects.map(p => `
+                            <article class="project-item">
+                                <div class="project-meta">
+                                    <span class="status-badge git-branch">feature/${p.title.toLowerCase().replace(/\\s+/g, '-')}</span>
+                                    <span class="date mono">${p.language || 'Code'}</span>
+                                </div>
+                                <h3 class="project-title"><a href="${p.link || '#'}" target="_blank" class="feature-link">${p.title} <span class="arrow">→</span></a></h3>
+                                <p class="project-desc">${p.description}</p>
+                            </article>
+                        `).join('');
+                        projectsContainer.insertAdjacentHTML('afterbegin', projectsHTML);
+                    }
+                }
+            }
+
+            // Fetch Blogs
+            const blogRes = await fetch('/api/blogs');
+            if (blogRes.ok) {
+                const blogData = await blogRes.json();
+                if (blogData.blogs && blogData.blogs.length > 0) {
+                    const blogsContainer = document.getElementById('blogs-container');
+                    if (blogsContainer) {
+                        const blogsHTML = blogData.blogs.map(b => {
+                            const parsedDate = new Date(b.date);
+                            const options = { year: 'numeric', month: 'long' };
+                            const formattedDate = parsedDate.toLocaleDateString(undefined, options);
+
+                            return `
+                            <article class="log-entry expanded">
+                                <div class="log-header">
+                                    <time class="log-date mono">${formattedDate}</time>
+                                    <span class="log-tag">#Log</span>
+                                </div>
+                                <h3 class="log-title">
+                                    <a href="#" class="feature-link toggle-blog">${b.title} <span class="arrow">↑</span></a>
+                                </h3>
+                                <div class="log-content mt-4" style="display: block;">
+                                    <p>${b.content.replace(/\\n/g, '<br>')}</p>
+                                </div>
+                            </article>
+                            `;
+                        }).join('');
+
+                        blogsContainer.insertAdjacentHTML('afterbegin', blogsHTML);
+
+                        // Re-attach toggle logic for new dynamically added blogs
+                        attachBlogToggles(blogsContainer.querySelectorAll('.toggle-blog'));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching dynamic content:', error);
+        }
+    }
+
+    // Abstracted blog toggle logic to re-use
+    function attachBlogToggles(elements) {
+        elements.forEach(toggle => {
+            // Remove old listeners by replacing clone
+            const newToggle = toggle.cloneNode(true);
+            toggle.parentNode.replaceChild(newToggle, toggle);
+
+            newToggle.addEventListener('click', (e) => {
+                e.preventDefault();
+                const article = newToggle.closest('.log-entry');
+                const content = article.querySelector('.log-content');
+                const arrow = newToggle.querySelector('.arrow');
+
+                if (article.classList.contains('expanded')) {
+                    article.classList.remove('expanded');
+                    content.style.display = 'none';
+                    arrow.textContent = '↓';
+                    arrow.style.transform = 'translateY(0)';
+                } else {
+                    article.classList.add('expanded');
+                    content.style.display = 'block';
+                    arrow.textContent = '↑';
+                    arrow.style.transform = 'translateY(-2px)';
+                }
+            });
+        });
+    }
+
+    // Call dynamic fetch on load
+    loadDynamicContent();
+
 });
